@@ -9,6 +9,9 @@ verify_ssl = true
 flask = "*"
 flask-sqlalchemy = "*"
 requests = "*"
+py-openaq = "*"
+python-decouple = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.6"
