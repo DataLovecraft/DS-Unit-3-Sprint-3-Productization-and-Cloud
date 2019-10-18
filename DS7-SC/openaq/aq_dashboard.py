@@ -5,7 +5,15 @@ from decouple import config
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from .models import DB, Record
-from .openaq import OpenAQ
+from .openaq import openaq
+
+def get_measurements(city='Los Angeles', parameter='pm25'):
+    api = OpenAQ()
+    status, body = api.measurements(city=city, parameter=parameter)
+    return [{'utc_datetime': datetime.strptime(result['date']['utc'],
+                                               '%Y-%m-%dT%H:%M:%S.%f%z'),
+                                               'location': result['location'],
+                                               'value': result['value']} for result in body['results']]
 
 def create_app():
     '''
@@ -30,20 +38,12 @@ def create_app():
         '''
         Pull fresh data from OpenAQ and replace existing data
         '''
-        records = Record.query.all()
-        add_or_update_records(get_records(api))
-        return render_template('base.html', title='Home',
-                                            records=records,
-                                            message='Records Refreshed!')
-    return app
-
-def get_measurements(city='Los Angeles', parameter='pm25'):
-    api = openaq.OpenAQ()
-    status, body = api.measurements(city=city, parameter=parameter)
-    return [{'utc_datetime': datetime.strptime(result['date']['utc'],
-                                               '%Y-%m-%dT%H:%M:%S.%f%z'),
-             'location': result['location'],
-             'value': result['value']} for result in body['results']]
-
-if __name__ == "__main__":
-    APP.run(debug = True)
+        DB.drop_all()
+        DB.create_all()
+        data = get_measurements()
+        for record in data:
+            DB.session.add(Record(utc_datetime=record['utc_datetime'],
+                                  location=record['location'],
+                                  value=record['value']))
+        DB.session.commit()
+        return 'Data refreshed!'

@@ -3,13 +3,13 @@ SQLAlchemy models for OpenAQ APP
 '''
 from flask_sqlalchemy import SQLAlchemy
 
-DB = SQLAlchemy()
+DB = SQLAlchemy(APP)
 
 class Record(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     country = DB.Column(DB.String(2))
     city = DB.Column(DB.String(25))
-    location = DB.Column(DB.Text)
+    location = DB.Column(DB.String(25))
     datetime = DB.Column(DB.String(25))
     value = DB.Column(DB.Float, nullable=False)
 
